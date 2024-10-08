@@ -1,0 +1,28 @@
+CREATE PROCEDURE CompareAllMetrics()
+BEGIN
+    -- Perform the comparison for all metrics on October 1st, 2024
+    INSERT INTO `your_comparison_result_table` (event_time, fqdn, metric_name, view_value, grafana_value, match_percentage)
+    SELECT 
+        v.event_time,
+        v.fqdn,
+        v.metric_name,
+        v.value AS view_value,
+        g.metric_value AS grafana_value,
+        CASE 
+            WHEN g.metric_value = 0 AND v.value = 0 THEN 100  -- Both are zero
+            WHEN g.metric_value = 0 THEN NULL  -- Prevent division by zero
+            ELSE ROUND((v.value / g.metric_value) * 100, 2)  -- Calculate percentage
+        END AS match_percentage
+    FROM 
+        `vz-it-np-gudv-dev-dtwndo-0.aid_nwperf.aether_core_tbls.aether_amf_performance_derived` v
+    LEFT JOIN 
+        `vz-it-np-gudv-dev-dtwndo-0.aid_nwperf.aether_core_tbls.aether_grafana_kpi` g 
+    ON 
+        v.event_time = TIMESTAMP_ADD(g.event_time, INTERVAL 1 HOUR)  -- Adjust for 1-hour offset
+        AND v.metric_name = g.metric_name
+        AND v.fqdn = TO_BASE64(SHA512(g.fqdn))
+    WHERE 
+        v.trans_dt = '2024-10-01'
+    ORDER BY 
+        v.event_time;
+END;
