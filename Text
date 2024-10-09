@@ -1,15 +1,3 @@
-Here’s a more professional way to phrase it:
+We got data from the launcher node for the eighth date, sixth hour, with one FQDN and all the AMF metric names. I used the same FQDN, timestamp, and metric names to get data from our Grafana table, using AMF as the function name to include all the AMF columns for comparison. However, the order of the metric names in Grafana was different from the launcher node, so I couldn’t compare them side by side. Instead, I put them in two separate sheets. You can compare them by looking for the metric names in both sheets.
 
-Good morning, @Swapnil Helonde,
-
-As we are returning Boolean values in our table for some metrics (e.g., initial_registration_failures_cc7-5gs_increase_services_not_allowed), we need to ensure consistency between our table and Grafana. Currently, Grafana is returning just the increase value with the greater-than condition (> 0), but to align with our table output, we should modify the Grafana expressions to return Boolean values as well.
-
-To do this, we need to update the expressions to include the bool condition, as follows:
-
-sum by(kubernetes_namespace) (increase(pcmn_VS_MM_RegInitRejCc7_5GS[1h])) > bool 0
-
-Once confirmed, I can proceed with updating these expressions and regenerate the CSVs to ensure the output matches our expectations.
-
-Let me know if this approach works for you.
-
-This version emphasizes the technical details while maintaining a professional tone. Let me know if you’d like to make any further adjustments!
+From what I’ve seen, most of the values match with the new logic, but please check it once more to be sure. Let me know if you find anything that needs fixing.
