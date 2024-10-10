@@ -1,0 +1,38 @@
+SELECT 
+    v.event_time,
+    v.fqdn,
+    v.metric_name,
+    v.value AS view_value,
+    g.metric_value AS grafana_value,
+    n.increase_value AS new_increase_value,
+    
+    -- Match percentage based on view_value
+    CASE 
+        WHEN g.metric_value = 0 AND v.value = 0 THEN 100  -- Both are zero
+        WHEN g.metric_value = 0 THEN NULL  -- Prevent division by zero
+        ELSE ROUND((v.value / g.metric_value) * 100, 2)  -- Percentage based on view_value
+    END AS match_percentage_view,
+    
+    -- Match percentage based on view_value + increase_value
+    CASE 
+        WHEN g.metric_value = 0 AND (v.value + n.increase_value) = 0 THEN 100  -- Both are zero
+        WHEN g.metric_value = 0 THEN NULL  -- Prevent division by zero
+        ELSE ROUND(((v.value + n.increase_value) / g.metric_value) * 100, 2)  -- Percentage based on view_value + increase_value
+    END AS match_percentage_with_increase
+
+FROM 
+    `vz-it-np-gudv-dev-dtwndo-0.aid_nwperf.aether_core_tbls.aether_amf_performance_derived` v
+LEFT JOIN 
+    `vz-it-np-gudv-dev-dtwndo-0.aid_nwperf.aether_core_tbls.aether_grafana_kpi` g 
+    ON v.event_time = TIMESTAMP_ADD(g.event_time, INTERVAL 1 HOUR)  -- Adjust for 1-hour offset
+    AND v.metric_name = g.metric_name
+    AND v.fqdn = TO_BASE64(SHA512(g.fqdn))
+LEFT JOIN 
+    `vz-it-np-gudv-dev-dtwndo-0.aid_nwperf.aether_core_tbls.aether_new_values` n 
+    ON v.event_time = n.event_time
+    AND v.metric_name = n.metric_name
+WHERE 
+    v.trans_dt = '2024-10-01' 
+    AND v.metric_name = '5gmm_pdu_establishment_failed__cc90'
+ORDER BY 
+    v.event_time;
